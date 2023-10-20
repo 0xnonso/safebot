@@ -2,11 +2,11 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const { ethers } = require("ethers");
 const {
-  Safe,
   EthersAdapter,
   SafeFactory,
   SafeAccountConfig,
 } = require("@safe-global/protocol-kit");
+import Safe from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
 
 ///state RPC, provider and info for the interactions
@@ -17,7 +17,6 @@ const RPC_URL = "https://ethereum-goerli.publicnode.com";
 const txServiceUrl = "https://safe-transaction-goerli.safe.global";
 const provider = new ethers.providers.JsonRpcProvider(RPC_URL);
 const { TEST_PRIVATE_KEY } = process.env;
-const blockNumber = 5;
 const createRandomWallet = () => {
   const user_details = ethers.Wallet.createRandom();
   return user_details;
@@ -199,7 +198,7 @@ const createSafeTransactionSendETH = async (
   });
   const SafeInjection = await Safe.create({
     ethAdapter: Injection,
-    safe_wallet_address,
+    safeAddress: safe_wallet_address,
   });
   // Create a Safe transaction with the provided parameters
   const safeTransaction = await SafeInjection.createTransaction({
@@ -258,42 +257,46 @@ const sendUserEth = async (
   });
 };
 
-const userEthBalance = async (generated_wallet_mnemonic, address) => {
-  if (generated_wallet_mnemonic) {
-    const _walletMnemonicInstance = ethers.Wallet.fromMnemonic(
-      generated_wallet_mnemonic
-    );
+const userEthBalance = async (generated_wallet_mnemonic) => {
+  const _walletMnemonicInstance = ethers.Wallet.fromMnemonic(
+    generated_wallet_mnemonic
+  );
 
-    //console.log(_walletMnemonicInstance.privateKey);
-    const walletMnemonicInstance = new ethers.Wallet(
-      _walletMnemonicInstance.privateKey,
-      provider
-    );
-    try {
-      return provider
-        .getBalance(
-          await walletMnemonicInstance.getAddress(),
-          await provider.getBlock(blockNumber).timestamp
-        )
-        .then((balance) => {
-          console.log(balance.toString() / 10 ** 18);
-          return balance.toString() / Math.pow(10, 18);
-        });
-    } catch (error) {
-      console.log(error);
-    }
+  //console.log(_walletMnemonicInstance.privateKey);
+  const walletMnemonicInstance = new ethers.Wallet(
+    _walletMnemonicInstance.privateKey,
+    provider
+  );
+  try {
+    console.log("mnemonic");
+    return provider
+      .getBalance(
+        await walletMnemonicInstance.getAddress(),
+        await provider.getBlock("latest").timestamp
+      )
+      .then((balance) => {
+        console.log(balance.toString() / 10 ** 18);
+        return balance.toString() / Math.pow(10, 18);
+      });
+  } catch (error) {
+    console.log(error);
   }
-  if (address) {
-    try {
-      return provider
-        .getBalance(address, await provider.getBlock(blockNumber).timestamp)
-        .then((balance) => {
-          console.log(balance.toString() / 10 ** 18);
-          return balance.toString() / Math.pow(10, 18);
-        });
-    } catch (error) {
-      console.log(error);
-    }
+};
+const safeEthBalance = async (safe_wallet_address) => {
+  if (!/^0x[a-fA-F0-9]{40}$/gm.test(safe_wallet_address.trim())) throw 703;
+  try {
+    console.log("address");
+    return provider
+      .getBalance(
+        safe_wallet_address,
+        await provider.getBlock("latest").timestamp
+      )
+      .then((balance) => {
+        console.log(balance.toString() / 10 ** 18);
+        return balance.toString() / Math.pow(10, 18);
+      });
+  } catch (error) {
+    console.log(error);
   }
 };
 export {
@@ -304,4 +307,5 @@ export {
   createSafeTransactionSendETH,
   sendUserEth,
   userEthBalance,
+  safeEthBalance,
 };

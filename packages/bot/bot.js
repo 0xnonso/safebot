@@ -11,6 +11,7 @@ import {
   importSafeWallet,
   sendUserEth,
   userEthBalance,
+  safeEthBalance,
 } from "./safeinteraction.js";
 const { hydrate } = require("@grammyjs/hydrate");
 const {
@@ -38,12 +39,12 @@ function createInitialSessionData() {
   return {
     log: 1,
     existing_chat: false,
-    generated_wallet_address: process.env.WALLET_ADDRESS,
+    generated_wallet_address: "" || process.env.WALLET_ADDRESS,
     generated_wallet_privatekey: "",
-    generated_wallet_mnemonic: process.env.PRIVATE_MNEMONIC,
+    generated_wallet_mnemonic: "" || process.env.PRIVATE_MNEMONIC,
     safe_wallets_array: [],
-    safe_wallet: "",
-    has_safe_wallet: false,
+    safe_wallet: "" || process.env.TEST_WALLET,
+    has_safe_wallet: true,
     edit_able_message_id: 0,
   };
 }
@@ -135,7 +136,7 @@ bot.use(createConversation(ask_for_reciever_amount_input));
 async function ask_for_safe_transfer_eth_input(conversation, ctx) {
   /*if (!ctx.session.existing_chat)
     return ctx.replyFmt(fmt`Error processing request`); */
-  const balance = await userEthBalance(ctx.session.generated_wallet_mnemonic);
+  const balance = await safeEthBalance(ctx.session.safe_wallet);
   console.log("bot", balance);
 
   await ctx.replyFmt(
@@ -246,12 +247,14 @@ ${fmt`Send ethereum to this address to pay for gas`}
       ctx.session.safe_wallet = safeAccountWallet;
       ctx.session.has_safe_wallet = true;
       verify.editText("Safe Wallet successfully created: " + safeAccountWallet);
+      return;
       // Menu_refresh(ctx);
     } catch (error) {
       verify.editText(
         `Cannot create safe wallet. Please ensure you have enough ETH to cover the gas fee.`
       );
       console.log(error);
+      return;
     }
   })
 
@@ -308,10 +311,6 @@ async function ask_for_input_for_safeimport(conversation, ctx) {
     fmt`Please wait while we verify..., This process will take ~ 5minutes`
   );
   try {
-    ctx.session.safe_wallet = message?.text;
-    ctx.session.has_safe_wallet = true;
-    console.log(ctx.session.safe_wallet, "bool check 320");
-    console.log(ctx.session.has_safe_wallet, "bool check 321");
     console.log("started the stuff");
     const ImportSafeWallet = await importSafeWallet(
       ctx.session.generated_wallet_mnemonic,
@@ -319,6 +318,10 @@ async function ask_for_input_for_safeimport(conversation, ctx) {
     );
     console.log();
     verify.editText(`Successfully Imported: ${message.text}`);
+    ctx.session.safe_wallet = message?.text;
+    ctx.session.has_safe_wallet = true;
+    console.log(ctx.session.safe_wallet, "bool check 320");
+    console.log(ctx.session.has_safe_wallet, "bool check 321");
     // Menu_refresh(ctx);
     return;
   } catch (e) {
@@ -391,8 +394,7 @@ const safe_menu = new Menu("my-safe-identifier")
       ctx.replyFmt("User currently have no Created or Imported Safe");
       return;
     }
-    const transferSafeETH = createSafeTransactionSendETH();
-    ctx.replyFmt("eth_transfer_tokens");
+    await ctx.conversation.enter("ask_for_safe_transfer_eth_input");
     try {
       //  const sendingEth = sendUserEth();
     } catch (error) {}
@@ -440,7 +442,7 @@ ${spoiler(ctx.session.generated_wallet_mnemonic)}
 bot.use(intro_menu);
 intro_menu.register(safe_menu);
 intro_menu.register(settings_menu);
-// Handle the /start command.
+
 // Handle the /start command.
 bot.command("start", (ctx) => {
   Start(ctx);
@@ -501,7 +503,8 @@ const Start = (ctx) => {
     ctx.session.generated_wallet_address = user_wallet.address;
     console.log(user_wallet);
   }
-*/
+  */
+
   console.log("bool for safe wallet", ctx.session.has_safe_wallet);
   console.log("bool for safe wallet 504", ctx.session.safe_wallet);
   ctx.replyFmt(
@@ -528,7 +531,7 @@ ${bold(
   fmt`▰ ${link("Wallet", NETWORK_SCAN_ADDRESS + ctx.session.safe_wallet)} ▰ `
 )}
 ${code(ctx.session.safe_wallet)}`
-    : "Hello saucy"
+    : ""
 }`,
     { reply_markup: intro_menu, disable_web_page_preview: true }
   );
@@ -547,5 +550,5 @@ bot.catch((err) => {
     console.error("Unknown error:", e);
   }
 });
-
-run(bot);
+bot.start();
+//run(bot);
