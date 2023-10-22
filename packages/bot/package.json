@@ -1,5 +1,17 @@
 {
+  "name": "safebot",
+  "author": "XXXXxxxxx",
+  "license": "MIT",
+  "scripts": {
+    "env": "vercel env pull .env",
+    "polling": "npm run env && npm run start",
+    "webhook": "npm run tunnel & vercel dev --listen 3000",
+    "tunnel": "cloudflared tunnel --url http://localhost:3000",
+    "start": "node --watch -r dotenv/config scripts/start.mjs"
+  },
   "dependencies": {
+    "grammy": "^1.19.2",
+    "vercel-grammy": "^0.2.1",
     "@grammyjs/conversations": "^1.1.2",
     "@grammyjs/hydrate": "^1.3.1",
     "@grammyjs/menu": "^1.2.1",
@@ -10,16 +22,12 @@
     "@safe-global/safe-core-sdk-types": "^2.3.0",
     "dotenv": "^16.3.1",
     "ethers": "5.7.2",
-    "grammy": "^1.19.1",
     "install": "^0.13.0"
   },
-  "type": "module",
   "devDependencies": {
-    "@types/node": "^20.8.6",
-    "nodemon": "^3.0.1",
-    "ts-node": "^10.9.1"
+    "dotenv": "^16.3.1"
   },
-  "scripts": {
-    "start": "ts-node ./bot.js"
+  "engines": {
+    "node": "^18.0.0"
   }
 }
