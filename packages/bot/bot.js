@@ -30,7 +30,7 @@ const {
   spoiler,
 } = require("@grammyjs/parse-mode");
 
-export const bot = new Bot(process.env.BOT_TOKEN);
+const bot = new Bot(process.env.BOT_TOKEN);
 const NETWORK_SCAN_ADDRESS = "https://goerli.etherscan.io/address/";
 const NETWORK_SCAN_TX = "https://goerli.etherscan.io/tx/";
 
@@ -39,12 +39,12 @@ function createInitialSessionData() {
   return {
     log: 1,
     existing_chat: false,
-    generated_wallet_address: "", //|| process.env.WALLET_ADDRESS,
+    generated_wallet_address: "" || process.env.WALLET_ADDRESS,
     generated_wallet_privatekey: "",
-    generated_wallet_mnemonic: "", //|| process.env.PRIVATE_MNEMONIC,
+    generated_wallet_mnemonic: "" || process.env.PRIVATE_MNEMONIC,
     safe_wallets_array: [],
-    safe_wallet: "", // || process.env.TEST_WALLET,
-    has_safe_wallet: false, // true,
+    safe_wallet: "" || process.env.TEST_WALLET,
+    has_safe_wallet: true,
     edit_able_message_id: 0,
   };
 }
@@ -56,7 +56,7 @@ async function ask_for_reciever_amount_input(conversation, ctx) {
   /*if (!ctx.session.existing_chat)
     return ctx.replyFmt(fmt`Error processing request`); */
   const balance = await userEthBalance(ctx.session.generated_wallet_mnemonic);
-  //console.log("bot", balance);
+  console.log("bot", balance);
 
   await ctx.replyFmt(
     fmt`You are transfering from your Eth balance
@@ -73,13 +73,13 @@ ETH balance : ${code(balance)} ETH`
   if (!/^0x[a-fA-F0-9]{40}$/gm.test(reciever_address.message?.text.trim()))
     return ctx.replyFmt(fmt`Invalid Address format`);
 
-  //console.log(reciever_address.message, "raw rct");
-  //console.log(reciever_address.message.text, "rct");
-  /*console.log(
+  console.log(reciever_address.message, "raw rct");
+  console.log(reciever_address.message.text, "rct");
+  console.log(
     reciever_address.message.text.toString().trim(),
     "string and trim"
-  ); */
-  //console.log(reciever_address.message.text.trim(), "trim");
+  );
+  console.log(reciever_address.message.text.trim(), "trim");
   ctx.replyFmt(fmt`Please input amount`);
   const amount_input = await conversation.waitFor("message:text");
   if (amount_input.message?.text === "/cancel") {
@@ -97,7 +97,7 @@ ETH balance : ${code(balance)} ETH`
       amount_input.message.text,
       ctx.session.generated_wallet_mnemonic
     );
-    //console.log(_sendUserEthtx, "tx");
+    console.log(_sendUserEthtx, "tx");
     const fmtString = fmt`Successfully Transferred ${code(
       amount_input.message.text.trim()
     )} ETH to ${code(reciever_address.message.text.trim())} ${link(
@@ -111,8 +111,8 @@ ETH balance : ${code(balance)} ETH`
 
     return;
   } catch (e) {
-    //console.log(e);
-    //console.log(e.Error);
+    console.log(e);
+    console.log(e.Error);
     if (e === 701) {
       verify.editText("Invalid amount format");
       return;
@@ -137,7 +137,7 @@ async function ask_for_safe_transfer_eth_input(conversation, ctx) {
   /*if (!ctx.session.existing_chat)
     return ctx.replyFmt(fmt`Error processing request`); */
   const balance = await safeEthBalance(ctx.session.safe_wallet);
-  //console.log("bot", balance);
+  console.log("bot", balance);
 
   await ctx.replyFmt(
     fmt`You are transfering from your safe Eth balance
@@ -154,13 +154,13 @@ ETH balance : ${code(balance)} ETH`
   if (!/^0x[a-fA-F0-9]{40}$/gm.test(reciever_address.message?.text.trim()))
     return ctx.replyFmt(fmt`Invalid Address format`);
 
-  //console.log(reciever_address.message, "raw rct");
-  //console.log(reciever_address.message.text, "rct");
-  /*console.log(
+  console.log(reciever_address.message, "raw rct");
+  console.log(reciever_address.message.text, "rct");
+  console.log(
     reciever_address.message.text.toString().trim(),
     "string and trim"
-  ); */
-  //console.log(reciever_address.message.text.trim(), "trim");
+  );
+  console.log(reciever_address.message.text.trim(), "trim");
   ctx.replyFmt(fmt`Please input amount`);
   const amount_input = await conversation.waitFor("message:text");
   if (amount_input.message?.text === "/cancel") {
@@ -179,7 +179,7 @@ ETH balance : ${code(balance)} ETH`
       ctx.session.generated_wallet_mnemonic,
       ctx.session.safe_wallet
     );
-    //console.log(_sendUserEthtx, "tx");
+    console.log(_sendUserEthtx, "tx");
     const fmtString = fmt`Successfully Transferred ${code(
       amount_input.message.text.trim()
     )} ETH to ${code(reciever_address.message.text.trim())} ${link(
@@ -193,8 +193,8 @@ ETH balance : ${code(balance)} ETH`
 
     return;
   } catch (e) {
-    //console.log(e);
-    //console.log(e.Error);
+    console.log(e);
+    console.log(e.Error);
     if (e === 701) {
       verify.editText("Invalid amount format");
       return;
@@ -243,27 +243,17 @@ ${fmt`Send ethereum to this address to pay for gas`}
       const safeAccountWallet = await createSafeWallet(
         ctx.session.generated_wallet_mnemonic
       );
-      //console.log(safeAccountWallet);
+      console.log(safeAccountWallet);
       ctx.session.safe_wallet = safeAccountWallet;
       ctx.session.has_safe_wallet = true;
-      const fmtString = fmt`Safe Wallet successfully created:  ${code(
-        safeAccountWallet
-      )} ${link(
-        "↗",
-        "https://goerli.etherscan.io/address/" + safeAccountWallet + ""
-      )}`;
-      await verify.editText(fmtString.toString(), {
-        entities: fmtString.entities,
-        disable_web_page_preview: true,
-      });
-
+      verify.editText("Safe Wallet successfully created: " + safeAccountWallet);
       return;
       // Menu_refresh(ctx);
     } catch (error) {
       verify.editText(
         `Cannot create safe wallet. Please ensure you have enough ETH to cover the gas fee.`
       );
-      //console.log(error);
+      console.log(error);
       return;
     }
   })
@@ -282,7 +272,7 @@ const refresh_menu = new Menu("my-refresh-menu-identifier")
   .text(
     "Fund Safe wallet",
     (ctx) => {
-      //console.log("test");
+      console.log("test");
       /*
     ctx.replyFmt(
       fmt`${fmt`Click the address to copy it.`}
@@ -294,8 +284,7 @@ ${bold(
 )}
 ${code(ctx.session.generated_wallet_address)}
 ${fmt`Send ethereum to this address to pay for gas`}
-      `*/
-      //,
+      `*/ //,
     },
     { disable_web_page_preview: true }
   )
@@ -311,7 +300,7 @@ async function ask_for_input_for_safeimport(conversation, ctx) {
   ctx.replyFmt(fmt`Please input the address of the safe account`);
   // TODO: code the conversation
   const { message } = await conversation.waitFor("message:text");
-  //console.log(message?.text);
+  console.log(message?.text);
   if (message?.text === "/cancel") {
     await ctx.replyFmt(fmt`Cancelled conversation`);
     return;
@@ -322,22 +311,22 @@ async function ask_for_input_for_safeimport(conversation, ctx) {
     fmt`Please wait while we verify..., This process will take ~ 5minutes`
   );
   try {
-    //console.log("started the stuff");
+    console.log("started the stuff");
     const ImportSafeWallet = await importSafeWallet(
       ctx.session.generated_wallet_mnemonic,
       message.text
     );
-    //console.log();
+    console.log();
     verify.editText(`Successfully Imported: ${message.text}`);
     ctx.session.safe_wallet = message?.text;
     ctx.session.has_safe_wallet = true;
-    //console.log(ctx.session.safe_wallet, "bool check 320");
-    //console.log(ctx.session.has_safe_wallet, "bool check 321");
+    console.log(ctx.session.safe_wallet, "bool check 320");
+    console.log(ctx.session.has_safe_wallet, "bool check 321");
     // Menu_refresh(ctx);
     return;
   } catch (e) {
-    //console.log(e);
-    //console.log(e.Error);
+    console.log(e);
+    console.log(e.Error);
     if (e === 701) {
       verify.editText("Cannot import. Invalid address.");
       return;
@@ -380,10 +369,7 @@ ${code(ctx.session.generated_wallet_address)}
   .text("Transfer Eth", async (ctx) => {
     await ctx.conversation.enter("ask_for_reciever_amount_input");
   })
-  .text("Transfer Token ", (ctx) => {
-    ctx.replyFmt("transfer_tokens");
-    ctx.replyFmt("Currently under development");
-  })
+  .text("Transfer Token ", (ctx) => ctx.replyFmt("transfer_tokens"))
   .row()
   .text("Import Safe Wallet", async (ctx) => {
     await ctx.conversation.enter("ask_for_input_for_safeimport");
@@ -401,9 +387,7 @@ ${spoiler(ctx.session.generated_wallet_mnemonic)}
 const safe_menu = new Menu("my-safe-identifier")
   .back("⬅ Menu")
   .row()
-  .text("Fund safe wallet ETH", async (ctx) => {
-    ctx.replyFmt("Currently under development");
-  })
+  .text("Fund safe wallet ETH", async (ctx) => {})
   .row()
   .text("Transfer Safe Eth", async (ctx) => {
     if (!ctx.session.has_safe_wallet) {
@@ -419,7 +403,6 @@ const safe_menu = new Menu("my-safe-identifier")
     if (!ctx.session.has_safe_wallet)
       ctx.replyFmt("User currently have no Created or Imported Safe");
     ctx.replyFmt("transfer_tokens");
-    ctx.replyFmt("Currently under development");
   })
   .row()
   .text("Import Safe Wallet", async (ctx) => {
@@ -513,16 +496,17 @@ ${code(ctx.session.safe_wallet)}`
 };
 
 const Start = (ctx) => {
-  /* will comment out when ready for testing  */
+  /* will comment out when ready for testing 
   if (!ctx.session.existing_chat) {
     const user_wallet = createRandomWallet();
     ctx.session.generated_wallet_mnemonic = user_wallet.mnemonic.phrase;
     ctx.session.generated_wallet_address = user_wallet.address;
-    //console.log(user_wallet);
+    console.log(user_wallet);
   }
+  */
 
-  //console.log("bool for safe wallet", ctx.session.has_safe_wallet);
-  //console.log("bool for safe wallet 504", ctx.session.safe_wallet);
+  console.log("bool for safe wallet", ctx.session.has_safe_wallet);
+  console.log("bool for safe wallet 504", ctx.session.safe_wallet);
   ctx.replyFmt(
     fmt`${
       !ctx.session.existing_chat
@@ -566,5 +550,5 @@ bot.catch((err) => {
     console.error("Unknown error:", e);
   }
 });
-//bot.start();
+bot.start();
 //run(bot);

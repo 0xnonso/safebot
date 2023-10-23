@@ -28,14 +28,14 @@ const createSafeWallet = async (generated_wallet_mnemonic) => {
     generated_wallet_mnemonic
   );
 
-  //console.log(_walletMnemonicInstance.privateKey);
+  console.log(_walletMnemonicInstance.privateKey);
   const walletMnemonicInstance = new ethers.Wallet(
     _walletMnemonicInstance.privateKey,
     provider
   );
   //const login_user_signer = walletMnemonicInstance.connect(provider);
   const login_user_signer = walletMnemonicInstance;
-  //console.log(await login_user_signer.getAddress());
+  console.log(await login_user_signer.getAddress());
   const safeAccountConfig = {
     owners: [await login_user_signer.getAddress()],
     threshold: 1,
@@ -58,7 +58,7 @@ const createSafeWallet = async (generated_wallet_mnemonic) => {
   };
   const timestamp = (await provider.getBlock("latest")).timestamp;
 
-  //console.log(timestamp);
+  console.log(timestamp);
   const user_safe_account = await safeFactory.deploySafe({
     safeAccountConfig,
     saltNonce: timestamp,
@@ -66,9 +66,9 @@ const createSafeWallet = async (generated_wallet_mnemonic) => {
 
   const safeAddress = await user_safe_account.getAddress();
 
-  //console.log("Your Safe has been deployed:");
-  //console.log(`https://goerli.etherscan.io/address/${safeAddress}`);
-  //console.log(`https://app.safe.global/gor:${safeAddress}`);
+  console.log("Your Safe has been deployed:");
+  console.log(`https://goerli.etherscan.io/address/${safeAddress}`);
+  console.log(`https://app.safe.global/gor:${safeAddress}`);
 
   return safeAddress;
 };
@@ -95,27 +95,32 @@ const importSafeWallet = async (
     signerOrProvider: login_user_signer,
   });
   const userAddress = await login_user_signer.getAddress();
+  const safeAccountConfig = {
+    owners: [await login_user_signer.getAddress()],
+    threshold: 1,
+  };
+
   const safeService = new SafeApiKit.default({
     txServiceUrl: "https://safe-transaction-goerli.safe.global",
     ethAdapter: ethAdapterSafeWalletCreation,
   });
-  //console.log("started the stuff 1");
+  console.log("started the stuff 1");
   if (/^0x[a-fA-F0-9]{40}$/gm.test(safe_wallet_address.trim())) {
     // check if the address belongs to the user
-    //console.log("started the stuff 2");
+    console.log("started the stuff 2");
     var safeInfo;
     try {
       safeInfo = await safeService.getSafeInfo(safe_wallet_address);
     } catch (error) {
       throw 704;
     }
-    //console.log(safeInfo);
-    //console.log("started the stuff 3");
-    //console.log(safeInfo);
+    console.log(safeInfo);
+    console.log("started the stuff 3");
+    console.log(safeInfo);
     for (var i = 0; safeInfo.owners.length >= i; i++) {
       if (safeInfo.owners[i] === userAddress) {
-        //console.log("started the stuff 4");
-        //console.log(true);
+        console.log("started the stuff 4");
+        console.log(true);
         return true;
       }
     }
@@ -134,14 +139,14 @@ const fundSafeWalletWithEth = async (
     generated_wallet_mnemonic
   );
 
-  //console.log(_walletMnemonicInstance.privateKey);
+  console.log(_walletMnemonicInstance.privateKey);
   const walletMnemonicInstance = new ethers.Wallet(
     _walletMnemonicInstance.privateKey,
     provider
   );
   //const login_user_signer = walletMnemonicInstance.connect(provider);
   const login_user_signer = walletMnemonicInstance;
-  //console.log(await login_user_signer.getAddress());
+  console.log(await login_user_signer.getAddress());
 
   const safeFundAmount = ethers.utils
     .parseUnits(amountInEth.toString(), "ether")
@@ -155,18 +160,12 @@ const fundSafeWalletWithEth = async (
     const tx = await login_user_signer.sendTransaction(transactionParameters);
     return tx;
   } catch (error) {
-    //console.log(error);
+    console.log(error);
   }
 
-  //console.log("Fundraising.");
-  //console.log(`Deposit Transaction: https://goerli.etherscan.io/tx/${tx.hash}`);
+  console.log("Fundraising.");
+  console.log(`Deposit Transaction: https://goerli.etherscan.io/tx/${tx.hash}`);
 };
-
-async function create(config) {
-  const safeSdk = new Safe.default();
-  await safeSdk.init(config);
-  return safeSdk;
-}
 
 const createSafeTransactionSendETH = async (
   destination,
@@ -182,7 +181,7 @@ const createSafeTransactionSendETH = async (
     generated_wallet_mnemonic
   );
 
-  ////console.log(_walletMnemonicInstance.privateKey);
+  //console.log(_walletMnemonicInstance.privateKey);
   const walletMnemonicInstance = new ethers.Wallet(
     _walletMnemonicInstance.privateKey,
     provider
@@ -193,144 +192,21 @@ const createSafeTransactionSendETH = async (
     data: "0x",
     value: amount,
   };
-
   const Injection = new EthersAdapter({
     ethers,
     signerOrProvider: login_user_signer,
   });
-  /*
-  let ABI = ["function transfer(address to, uint amount)"];
-  let iface = new ethers.utils.Interface(ABI);
-  console.log(iface);
-
-  let data = iface.encodeFunctionData("transfer", [
-    "0xD43D9bBcC3E7bbc58a11b4b7Cae1Be1d10898dA6",
-    parseEther("0.0001"),
-  ]);
-  console.log(data); */
-  // ("0xa9059cbb00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000de0b6b3a7640000");
-
-  const SafeInjection = await create({
+  const SafeInjection = await Safe.create({
     ethAdapter: Injection,
     safeAddress: safe_wallet_address,
   });
-  //console.log(safeTransactionData, "injection");
   // Create a Safe transaction with the provided parameters
-  console.log("pass");
   const safeTransaction = await SafeInjection.createTransaction({
     safeTransactionData,
   });
-  console.log("pass1");
-
-  //console.log("data passed on");
-  /*
-  const safeTxHash = await SafeInjection.getTransactionHash(safeTransaction);
-
-  const signerSignature = await SafeInjection.signTransactionHash(safeTxHash);
-  //console.log(
-    safe_wallet_address,
-    safeTransaction.data,
-    safeTxHash,
-    await login_user_signer.getAddress(),
-    signerSignature.data,
-    "test"
-  );
-  await safeService.proposeTransaction({
-    safe_wallet_address,
-    safeTransactionData: safeTransaction.data,
-    safeTxHash,
-    senderAddress: await login_user_signer.getAddress(),
-    senderSignature: signerSignature.data,
-  });
-
-  const safeTransactionTx = await safeService.getTransaction(safeTxHash);
-  */
-  const executeTxResponse = await SafeInjection.executeTransaction(
-    safeTransaction
-  );
-  const receipt = await executeTxResponse.transactionResponse?.wait();
-
-  console.log("Transaction executed:");
-  console.log(`https://goerli.etherscan.io/tx/${receipt.transactionHash}`);
-  /*
-   */
-  return receipt.transactionHash;
+  console.log(safeTransaction);
+  return safeTransaction;
 };
-
-const createSafeTransactionSendETH1 = async (
-  destination,
-  amountInEth,
-  generated_wallet_mnemonic,
-  safe_wallet_address
-) => {
-  if (!/^(0|[1-9]\d*)(\.\d+)?$/.test(amountInEth.trim())) throw 703;
-  const amount = ethers.utils
-    .parseUnits(amountInEth.toString(), "ether")
-    .toString();
-  const _walletMnemonicInstance = ethers.Wallet.fromMnemonic(
-    generated_wallet_mnemonic
-  );
-
-  ////console.log(_walletMnemonicInstance.privateKey);
-  const walletMnemonicInstance = new ethers.Wallet(
-    _walletMnemonicInstance.privateKey,
-    provider
-  );
-  const login_user_signer = walletMnemonicInstance;
-  const safeTransactionData = {
-    to: destination,
-    data: "0x",
-    value: amount,
-  };
-
-  const Injection = new EthersAdapter({
-    ethers,
-    signerOrProvider: login_user_signer,
-  });
-  /*
-  let ABI = ["function transfer(address to, uint amount)"];
-  let iface = new ethers.utils.Interface(ABI);
-  console.log(iface);
-
-  let data = iface.encodeFunctionData("transfer", [
-    "0xD43D9bBcC3E7bbc58a11b4b7Cae1Be1d10898dA6",
-    parseEther("0.0001"),
-  ]);
-  console.log(data); */
-  const safeTransactionData1 = {
-    to: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6",
-    data: "0x6cb927d8000000000000000000000000d43d9bbcc3e7bbc58a11b4b7cae1be1d10898da6000000000000000000000000000000000000000000000000000000e8d4a51000", //"0xa9059cbb000000000000000000000000d43d9bbcc3e7bbc58a11b4b7cae1be1d10898da6000000000000000000000000000000000000000000000000000000e8d4a51000",
-    value: "0.001",
-  };
-
-  // ("0xa9059cbb00000000000000000000000012345678901234567890123456789012345678900000000000000000000000000000000000000000000000000de0b6b3a7640000");
-  console.log(safeTransactionData1);
-
-  const SafeInjection = await create({
-    ethAdapter: Injection,
-    safeAddress: safe_wallet_address,
-  });
-  //console.log(safeTransactionData, "injection");
-  // Create a Safe transaction with the provided parameters
-  console.log("pass");
-
-  const safeTransaction1 = await SafeInjection.createTransaction({
-    safeTransactionData1,
-  });
-  console.log("pass3");
-  const executeTxResponse1 = await SafeInjection.executeTransaction(
-    safeTransaction1
-  );
-  console.log("pass4");
-  const receipt1 = await executeTxResponse1.transactionResponse?.wait();
-
-  console.log("Transaction executed:");
-  console.log(`https://goerli.etherscan.io/tx/${receipt1.transactionHash}`);
-  /*
-   */
-  return "lol";
-};
-
 /*
 exports.safeinteractions = {
   createSafeWallet,
@@ -359,7 +235,7 @@ const sendUserEth = async (
     generated_wallet_mnemonic
   );
 
-  ////console.log(_walletMnemonicInstance.privateKey);
+  //console.log(_walletMnemonicInstance.privateKey);
   const walletMnemonicInstance = new ethers.Wallet(
     _walletMnemonicInstance.privateKey,
     provider
@@ -372,12 +248,11 @@ const sendUserEth = async (
     value: ethers.utils.parseEther(amountInEth),
   };
   const balance = await userEthBalance(generated_wallet_mnemonic);
-  console.log(balance);
-  if (amountInEth >= balance) throw 705;
+  if (ethers.utils.parseEther(amountInEth) >= balance) throw 705;
 
   // Send a transaction
   return walletMnemonicInstance.sendTransaction(tx).then((txObj) => {
-    //console.log("txHash", txObj.hash);
+    console.log("txHash", txObj.hash);
     return txObj.hash;
   });
 };
@@ -387,41 +262,41 @@ const userEthBalance = async (generated_wallet_mnemonic) => {
     generated_wallet_mnemonic
   );
 
-  ////console.log(_walletMnemonicInstance.privateKey);
+  //console.log(_walletMnemonicInstance.privateKey);
   const walletMnemonicInstance = new ethers.Wallet(
     _walletMnemonicInstance.privateKey,
     provider
   );
   try {
-    //console.log("mnemonic");
+    console.log("mnemonic");
     return provider
       .getBalance(
         await walletMnemonicInstance.getAddress(),
         await provider.getBlock("latest").timestamp
       )
       .then((balance) => {
-        //console.log(balance.toString() / 10 ** 18);
+        console.log(balance.toString() / 10 ** 18);
         return balance.toString() / Math.pow(10, 18);
       });
   } catch (error) {
-    //console.log(error);
+    console.log(error);
   }
 };
 const safeEthBalance = async (safe_wallet_address) => {
   if (!/^0x[a-fA-F0-9]{40}$/gm.test(safe_wallet_address.trim())) throw 703;
   try {
-    //console.log("address");
+    console.log("address");
     return provider
       .getBalance(
         safe_wallet_address,
         await provider.getBlock("latest").timestamp
       )
       .then((balance) => {
-        //console.log(balance.toString() / 10 ** 18);
+        console.log(balance.toString() / 10 ** 18);
         return balance.toString() / Math.pow(10, 18);
       });
   } catch (error) {
-    //console.log(error);
+    console.log(error);
   }
 };
 export {
