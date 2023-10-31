@@ -1,0 +1,8 @@
+[package]
+name = "smotp"
+type = "bin"
+authors = [""]
+compiler_version = "0.10.5"
+
+[dependencies]
+noir_merkleroot = { path = "../noir-merkle-root/"}
